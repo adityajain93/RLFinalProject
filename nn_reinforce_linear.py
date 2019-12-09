@@ -218,7 +218,7 @@ class VNet(nn.Module):
 
 
 def test_reinforce(with_baseline):
-    env = toy('toy_linear.csv')
+    env = toy('data/toy_linear.csv')
     gamma = 1.0
     alpha = 3e-4
 
