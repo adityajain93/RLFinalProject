@@ -30,14 +30,21 @@ class PiApproximationWithNN():
        
     def __call__(self,s) -> int:
         # print("In Call Pi ")
-        # TODO: implement this method
         # print(s.shape)
-        s_torch = torch.from_numpy(s.reshape((self.state_dims,))).float().unsqueeze(0)
-        # print(s_torch.size())
-        prob = self.net(s_torch).data.cpu().numpy()[0]
-        action = np.random.choice(np.arange(self.num_actions), p = prob)
-        # print("Action selected " , action )
-        return action
+        action = None
+        try:
+            s_torch = torch.from_numpy(s.reshape((self.state_dims,))).float().unsqueeze(0)
+            
+            prob = self.net(s_torch).data.cpu().numpy()[0]
+            # if np.random.rand() < self.epsilon:
+            #     action = np.random.randint(self.num_actions)
+            # else:
+            action = np.random.choice(np.arange(self.num_actions), p = prob)
+        except:
+            print(self.net(s_torch))
+            print(s_torch, prob )
+        finally:
+            return action
 
     def update(self, s, a, gamma_t, delta):
         """
@@ -142,6 +149,17 @@ def REINFORCE(
     """
     # TODO: implement this method
     # print( "Number of episodes ", num_episodes)
+
+    def epsilon_greedy_policy(st, pi ,epsilon=0.):
+        nA = env.num_actions
+        a_t = pi(st)
+
+        if np.random.rand() < epsilon:
+            return np.random.randint(nA)
+        else:
+            return a_t
+
+
     G_0 = []
     for i_episode in range(num_episodes):
         if i_episode % 100 == 0:
@@ -153,8 +171,7 @@ def REINFORCE(
         action_sequence = []
         t = 0
         while not complete_flag:
-            
-            a_t = pi(st)
+            a_t = epsilon_greedy_policy(st, pi, 0.2)
             s_t1, r_t1, complete_flag =  env.step(a_t)
             state_sequence.append(s_t1)
             reward_sequene.append(r_t1)
@@ -219,9 +236,9 @@ class VNet(nn.Module):
 
 
 def test_reinforce(with_baseline):
-    env = toy('data/toy_linear.csv')
+    env = toy('data/toy_non_linear.csv')
     gamma = 1.0
-    alpha = 3e-4
+    alpha = 1e-4
 
 
     pi = PiApproximationWithNN(
@@ -236,14 +253,14 @@ def test_reinforce(with_baseline):
     else:
         B = Baseline(0.)
 
-    return REINFORCE(env,gamma,2000,pi,B)
+    return REINFORCE(env,gamma,5000,pi,B)
 
 
 
 
-def test_policy(pi, V):
-    x = np.arange(0.1, 0.51, 0.1)
-    y = np.arange(0.1, 0.91, 0.1)
+def test_policy(pi, V, plot = False):
+    x = np.arange(0.2, 0.81, 0.1)
+    y = np.arange(0.2, 0.81, 0.1)
     points = []
     for x_i in x:
         for y_i in y:
@@ -255,39 +272,28 @@ def test_policy(pi, V):
         prob = pi.net(s_torch).data.cpu().numpy()[0]
         print("point is  ",point,  "prob is ", prob, "Best policy", pi(point.T) , V(point.T))
     
-    for point in points:
-        plt.plot(point[0], point[1])
-        best_action  = pi(point.T)
-         
-        if (best_action ==0):
-            rep = 'left'
-        elif (best_action ==1):
-            rep = 'right'
-        elif (best_action ==2):
-            rep = 'down'
-        else:
-            rep = 'up'
-        plt.text(point[0], point[1], rep)
-        plt.xlim((0,1))
-        plt.ylim((0,1))
+    if plot:
+        for point in points:
+            plt.plot(point[0], point[1])
+            best_action  = pi(point.T)
+            
+            if (best_action ==0):
+                rep = 'left'
+            elif (best_action ==1):
+                rep = 'right'
+            elif (best_action ==2):
+                rep = 'down'
+            else:
+                rep = 'up'
+            plt.text(point[0], point[1], rep, horizontalalignment='center',verticalalignment='center')
+            plt.xlim((0,1))
+            plt.ylim((0,1))
 
-    plt.show()
+        plt.show()
    
 
 if __name__ == "__main__":
-    num_iter = 1
-
-    #Test REINFORCE without baseline
-    without_baseline = []
-    
-    for _ in range(num_iter):
-        
-        training_progress, pi, V = test_reinforce(with_baseline=False)
-        without_baseline.append(training_progress)
-    
-    without_baseline = np.mean(without_baseline,axis=0)
-    print("without baseline ", without_baseline)
-    # test_policy(pi, V)
+    num_iter = 4
 
     
     print("Completed code for without baseline ")
@@ -296,16 +302,16 @@ if __name__ == "__main__":
     for _ in range(num_iter):
         print(" In code for with Baseline ")
         training_progress, pi, V = test_reinforce(with_baseline=True)
+        test_policy(pi, V, plot =  True)
         with_baseline.append(training_progress)
     # print("with baseline ", with_baseline)
     with_baseline = np.mean(with_baseline,axis=0)
     print("with baseline ", with_baseline)
 
-    test_policy(pi, V)
+    # test_policy(pi, V, plot =  False)
 
     # # Plot the experiment result
     fig,ax = plt.subplots()
-    ax.plot(np.arange(len(without_baseline)),without_baseline, label='without baseline')
     ax.plot(np.arange(len(with_baseline)),with_baseline, label='with baseline')
 
     ax.set_xlabel('iteration')
