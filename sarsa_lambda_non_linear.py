@@ -204,7 +204,7 @@ def SarsaLambda(
 
 def test_algorithm(num_tiles,num_tilings):
     
-    env = toy('toy_non_linear.csv')
+    env = toy('data/toy_non_linear.csv')
     
     gamma = 0.98
     tile_width =  (env.state_high - env.state_low)/num_tiles

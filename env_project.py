@@ -225,7 +225,9 @@ class toy(Env):
         num_bins = 10.0
         y_column = 'Outcome'
         df = pd.read_csv(path)
-        x_columns = list(set(df.columns) - set(['Outcome'])) 
+        x_columns = list(df.columns)
+        x_columns.remove('Outcome')
+        print(x_columns)
         self.state_dimensions = len(x_columns)
         # An  action for each dimension to be incremented or decremented by a unit amount
         self.num_independent_variables = len(x_columns)

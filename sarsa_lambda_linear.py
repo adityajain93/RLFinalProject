@@ -203,7 +203,7 @@ def SarsaLambda(
 
 def test_algorithm(num_tiles):
     
-    env = toy('toy_linear.csv')
+    env = toy('data/toy_linear.csv')
     
     gamma = 0.98
     tile_width =  (env.state_high - env.state_low)/num_tiles
@@ -225,11 +225,11 @@ def test_algorithm(num_tiles):
 
     def _eval(w, render=False):
         s, done = env.reset(), False
-        print("Initial state  ", "_".join(map(str, s)))
-        # if render: env.render()
+        if render:
+            print("Initial state  ", "_".join(map(str, s)))
         action_sequence = []
         G = 0.
-        t =  0 
+        t = 0 
         while not done:
             if t > 100:
                 Q = [np.dot(w, X(s,done,a)) for a in range(env.num_actions)]
@@ -242,11 +242,11 @@ def test_algorithm(num_tiles):
             # if render: env.render()
 
             G += r
-        # print(G)
-        print("Inital prediction is ",env.initial_prediction, "Return is ", G ,  " , ".join(map(str, action_sequence)))
+        if render:
+            print("Inital prediction is ",env.initial_prediction, "Return is ", G ,  " , ".join(map(str, action_sequence)))
         return G
     perf_average = []
-
+    Gs = [_eval(w_final, True) for _ in  range(100)]
     for i in range(w_array.shape[0]):
         w_i = w_array[i]
         # print(",".join(map(str, w_i)))
@@ -255,7 +255,7 @@ def test_algorithm(num_tiles):
     
     print(perf_average)
 
-    # Gs = [_eval() for _ in  range(100)]
+    
      
     return perf_average
 
@@ -265,8 +265,8 @@ if __name__ == "__main__":
     plt.ylim(90,100)
     ax.set_xlabel('iteration / 100')
     ax.set_ylabel('Average return ')
-
-    tiles_list = [2,3,6,10]
+    np.random.seed(9)
+    tiles_list = [2,3, 6, 10]
     for num_tiles in tiles_list:
         np.random.seed(num_tiles)
         results = test_algorithm(num_tiles)
@@ -277,12 +277,7 @@ if __name__ == "__main__":
     ax.legend()
 
     plt.show()
-    # pd_average = pd.DataFrame(np.array(average).T)
-    # pd_average.cols = [str(x) for x in  reversed(range(2,4))]
-    
-    # print(pd_average.head())
-    # pd_average.plot()
-    # plt.plot(average.T, )
+ 
 
     
 
