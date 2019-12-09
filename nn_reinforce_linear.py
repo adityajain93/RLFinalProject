@@ -159,7 +159,7 @@ def REINFORCE(
             state_sequence.append(s_t1)
             reward_sequene.append(r_t1)
             action_sequence.append(a_t)
-            st = s_t1
+            st = s_t1.copy()
             t+=1
         T = t
 

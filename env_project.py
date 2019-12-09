@@ -62,13 +62,13 @@ class Env(object):
 
 
 class diabetes(Env):
-    def __init__(self):
+    def __init__(self, path):
         """
      
         unit_increment = np.array of size equal to size of x_columns
         value of the increment in each dimension
         """
-        path =  "diabetes.csv"
+        
         num_bins = 6.0
         x_columns  = ['Pregnancies','Glucose', 'BloodPressure',
                     'SkinThickness', 'Insulin',
@@ -222,7 +222,7 @@ class toy(Env):
         unit_increment = np.array of size equal to size of x_columns
         value of the increment in each dimension
         """
-        num_bins = 10.0
+        self.num_bins = 10.0
         y_column = 'Outcome'
         df = pd.read_csv(path)
         x_columns = list(df.columns)
@@ -242,13 +242,12 @@ class toy(Env):
         self.data_1 = df[df['Outcome']== 1].loc[:, self.x_columns].to_numpy()
         print(self.data_0.shape, self.data_1.shape)
         self.path = path
-        self.num_bins = num_bins
         # print(self.data.shape)
         self.state_low =  np.array([0.0,0.0])
         self.state_high =  np.array([1.0,1.0])
         # print(self.state_low, "\n", self.state_high)
         self.tile_width =  (self.state_high - self.state_low)/self.num_bins
-        # print(self.tile_width)
+        print(self.tile_width)
         self.unit_step = self.tile_width
         
 
