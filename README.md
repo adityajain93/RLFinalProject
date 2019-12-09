@@ -8,6 +8,11 @@ The code has been built upon from the skeletal code provided for assingments and
 3. Reinforce with NN: Adopted from skeletal code and own code written for Programming Assignment Ch12,13
 
 To run the code, clone the repository and run different files to get different graphs as shown in the report. All files should be run with RLFinalProject as the home folder
-1. Toy Example - Linear Case 
-  a. SARSA(lambda) with Tile Coding: run file sarsa_lambda_linear.py.
-  b. Neural Net with Reinforce: run file nn_reinforce_linear.py
+1. Toy Example - Linear Case <br/>
+SARSA(lambda) with Tile Coding: run file sarsa_lambda_linear.py. <br/>
+Neural Net with Reinforce: run file nn_reinforce_linear.py <br/>
+
+
+2. Toy Example - Non Linear Case <br/>
+SARSA(lambda) with Tile Coding: run file sarsa_lambda_non_linear.py. <br/>
+Neural Net with Reinforce: run file nn_reinforce_non_linear.py <br/>
