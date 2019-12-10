@@ -18,4 +18,4 @@ SARSA(lambda) with Tile Coding: run file sarsa_lambda_non_linear.py. <br/>
 Neural Net with Reinforce: run file nn_reinforce_non_linear.py <br/>
 
 3. Increased Dimensions: Linear Toy Example <br/>
-run filetest_reinforce_increased_dimension.py <br/>
+run file  test_reinforce_increased_dimension.py <br/>
