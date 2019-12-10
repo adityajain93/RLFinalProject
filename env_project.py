@@ -243,8 +243,8 @@ class toy(Env):
         print(self.data_0.shape, self.data_1.shape)
         self.path = path
         # print(self.data.shape)
-        self.state_low =  np.array([0.0,0.0])
-        self.state_high =  np.array([1.0,1.0])
+        self.state_low =  np.array([0.0]* self.num_independent_variables)
+        self.state_high =  np.array([1.0] * self.num_independent_variables)
         # print(self.state_low, "\n", self.state_high)
         self.tile_width =  (self.state_high - self.state_low)/self.num_bins
         print(self.tile_width)
