@@ -36,13 +36,14 @@ class PiApproximationWithNN():
             s_torch = torch.from_numpy(s.reshape((self.state_dims,))).float().unsqueeze(0)
             
             prob = self.net(s_torch).exp().data.cpu().numpy()[0]
+            #import pdb; pdb.set_trace()
             # if np.random.rand() < self.epsilon:
             #     action = np.random.randint(self.num_actions)
             # else:
             action = np.random.choice(np.arange(self.num_actions), p = prob)
         except:
-            print(self.net.forward_print(s_torch))
-            
+            import pdb; pdb.set_trace()
+            #print(self.net.forward_print(s_torch))
         finally:
             return action
 
@@ -53,7 +54,9 @@ class PiApproximationWithNN():
         gamma_t: gamma^t
         delta: G-v(S_t,w)
         """
-       
+        # print(s.shape)
+        # print("Delta and Gamma_t " , delta, gamma_t)
+        
         s_torch = torch.from_numpy(s.reshape((self.state_dims,))).float().unsqueeze(0)
         # print("Computing probab from net ", self.net(s_torch)[0])
 
@@ -69,7 +72,6 @@ class PiApproximationWithNN():
         #     param.grad = param.grad*delta * gamma_t
         self.optimizer.step()
         # return None
-        # TODO: implement this method
 
         
 
@@ -161,8 +163,7 @@ def REINFORCE(
 
     G_0 = []
     for i_episode in range(num_episodes):
-        if i_episode % 100 == 0:
-            print("in episode ", i_episode)
+
         st = env.reset()
         complete_flag = False
         reward_sequene = [0]
@@ -170,10 +171,12 @@ def REINFORCE(
         action_sequence = []
         t = 0
         while not complete_flag:
+            # if t%100 == 0:
+            #     print(" In Step ", t)
             a_t = epsilon_greedy_policy(st, pi, 0.1)
             # print("Step ", t, " State ","_".join(map(str, st)) , " Action ", a_t)
-
             s_t1, r_t1, complete_flag =  env.step(a_t)
+            r_t1 /= 10 # 
             state_sequence.append(s_t1)
             reward_sequene.append(r_t1)
             action_sequence.append(a_t)
@@ -181,6 +184,7 @@ def REINFORCE(
             t+=1
         T = t
 
+        G0 = 0.0
         for t in range(T):
             G = 0.0
             for k in range(t+1, T+1):
@@ -190,6 +194,9 @@ def REINFORCE(
             pi.update(state_sequence[t],action_sequence[t], gamma ** t, delta)
             if t == 0:
                 G_0.append(G)
+                G0 = G
+        if i_episode % 5 == 0:
+            print("Episode %04d | reward %10.4f " % (i_episode, G0))
 
     return G_0, pi, V
 
@@ -208,7 +215,7 @@ def REINFORCE(
 class PNet(nn.Module):
     def __init__(self, state_dim, num_actions):
         super(PNet, self).__init__()
-        self.num_hidden = 8
+        self.num_hidden = 64
         self.hidden1 = nn.Linear(state_dim, self.num_hidden)
         self.hidden2 = nn.Linear(self.num_hidden, self.num_hidden)
         self.output = nn.Linear(self.num_hidden, num_actions)
@@ -221,33 +228,35 @@ class PNet(nn.Module):
         x = F.log_softmax(x, dim = -1)
         return x
     
-    def forward_print(self, x):
-        x1 = F.relu(self.hidden1(x))
-        x2= F.relu(self.hidden2(x1))
-        x3 = F.softmax(self.output(x2))
-        return x3,x2,x1,x
-
+    # def forward_print(self, x):
+    #     x1 = F.relu(self.hidden1(x))
+    #     x2= F.relu(self.hidden2(x1))
+    #     x = self.output(x2)
+    #     x = x - x.max(1)[0]
+    #     x3 = F.softmax(x)
+    #     return x3,x2,x1,x
+    
 
 class VNet(nn.Module):
     def __init__(self, state_dim):
         super(VNet, self).__init__()
-        self.num_hidden = 8
+        self.num_hidden = 64
         self.hidden1 = nn.Linear(state_dim, self.num_hidden)
         self.hidden2 = nn.Linear(self.num_hidden, self.num_hidden)
         self.output = nn.Linear(self.num_hidden, 1)
 
     def forward(self, x):
-        x1 = F.relu(self.hidden1(x))
-        x2 = F.relu(self.hidden2(x1))
-        x3 = self.output(x2)
-        return x3
+        x = F.relu(self.hidden1(x))
+        x = F.relu(self.hidden2(x))
+        x = self.output(x)
+        return x
 
 
 
 def test_reinforce(with_baseline):
-    env = toy('data/toy_non_linear.csv')
+    env = diabetes('data/diabetes.csv')
     gamma = 1.0
-    alpha = 3e-4
+    alpha = 1e-4
 
 
     pi = PiApproximationWithNN(
@@ -262,64 +271,24 @@ def test_reinforce(with_baseline):
     else:
         B = Baseline(0.)
 
-    return REINFORCE(env,gamma,10000,pi,B)
+    return REINFORCE(env,gamma,30000,pi,B)
 
 
 
-
-def test_policy(pi, V, plot = False):
-    x = np.arange(0.2, 0.81, 0.1)
-    y = np.arange(0.2, 0.81, 0.1)
-    points = []
-    for x_i in x:
-        for y_i in y:
-            points.append([x_i, y_i])
-    points = np.array(points)
-    for point in points:
-        s_torch = torch.from_numpy(point.reshape((pi.state_dims,))).float().unsqueeze(0)
-        # print(s_torch.size())
-        prob = pi.net(s_torch).data.cpu().numpy()[0]
-        print("point is  ",point,  "prob is ", prob, "Best policy", pi(point.T) , V(point.T))
-    
-    if plot:
-        for point in points:
-            plt.plot(point[0], point[1])
-            best_action  = pi(point.T)
-            
-            if (best_action ==0):
-                rep = 'left'
-            elif (best_action ==1):
-                rep = 'right'
-            elif (best_action ==2):
-                rep = 'down'
-            else:
-                rep = 'up'
-            plt.text(point[0], point[1], rep, horizontalalignment='center',verticalalignment='center')
-            plt.xlim((0,1))
-            plt.ylim((0,1))
-
-        plt.show()
-   
 
 if __name__ == "__main__":
     num_iter = 1
 
-    
-    print("Completed code for without baseline ")
-    # Test REINFORCE with baseline
     with_baseline = []
     for _ in range(num_iter):
         print(" In code for with Baseline ")
         training_progress, pi, V = test_reinforce(with_baseline=True)
-        test_policy(pi, V, plot =  True)
         with_baseline.append(training_progress)
     # print("with baseline ", with_baseline)
     with_baseline = np.mean(with_baseline,axis=0)
     print("with baseline ", with_baseline)
 
-    # test_policy(pi, V, plot =  False)
-
-    # # Plot the experiment result
+   
     fig,ax = plt.subplots()
     ax.plot(np.arange(len(with_baseline)),with_baseline, label='with baseline')
 
